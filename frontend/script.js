@@ -5,7 +5,7 @@ const API_URL = '/api';
 let currentSessionId = null;
 
 // DOM elements
-let chatMessages, chatInput, sendButton, totalCourses, courseTitles;
+let chatMessages, chatInput, sendButton, totalCourses, courseTitles, newChatButton;
 
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
@@ -15,6 +15,7 @@ document.addEventListener('DOMContentLoaded', () => {
     sendButton = document.getElementById('sendButton');
     totalCourses = document.getElementById('totalCourses');
     courseTitles = document.getElementById('courseTitles');
+    newChatButton = document.getElementById('newChatButton');
     
     setupEventListeners();
     createNewSession();
@@ -29,6 +30,8 @@ function setupEventListeners() {
         if (e.key === 'Enter') sendMessage();
     });
     
+    // New chat button
+    newChatButton.addEventListener('click', startNewChat);
     
     // Suggested questions
     document.querySelectorAll('.suggested-item').forEach(button => {
@@ -122,10 +125,42 @@ function addMessage(content, type, sources = null, isWelcome = false) {
     let html = `<div class="message-content">${displayContent}</div>`;
     
     if (sources && sources.length > 0) {
+        // Process sources to create individual source cards
+        const processedSources = sources.map((source, index) => {
+            // Check if source contains embedded link (format: "source text|url")
+            const parts = source.split('|');
+            let sourceText, url, hasLink = false;
+            
+            if (parts.length === 2) {
+                [sourceText, url] = parts;
+                hasLink = true;
+            } else {
+                sourceText = source;
+            }
+            
+            // Determine source type for icon
+            const sourceType = getSourceType(sourceText);
+            const icon = getSourceIcon(sourceType);
+            
+            const sourceCard = `
+                <div class="source-card" data-source-type="${sourceType}">
+                    <div class="source-icon">${icon}</div>
+                    <div class="source-text">
+                        ${hasLink ? `<a href="${url}" target="_blank" rel="noopener noreferrer" class="source-link">${sourceText}</a>` : sourceText}
+                    </div>
+                </div>
+            `;
+            
+            return sourceCard;
+        });
+        
         html += `
             <details class="sources-collapsible">
-                <summary class="sources-header">Sources</summary>
-                <div class="sources-content">${sources.join(', ')}</div>
+                <summary class="sources-header">
+                    <span class="sources-icon">📚</span>
+                    Sources (${sources.length})
+                </summary>
+                <div class="sources-container">${processedSources.join('')}</div>
             </details>
         `;
     }
@@ -144,12 +179,64 @@ function escapeHtml(text) {
     return div.innerHTML;
 }
 
+// Helper functions for source type detection and icons
+function getSourceType(sourceText) {
+    const text = sourceText.toLowerCase();
+    
+    if (text.includes('lesson') || text.includes('course')) {
+        return 'lesson';
+    } else if (text.includes('pdf') || text.includes('.pdf')) {
+        return 'pdf';
+    } else if (text.includes('video') || text.includes('mp4') || text.includes('youtube')) {
+        return 'video';
+    } else if (text.includes('doc') || text.includes('documentation')) {
+        return 'documentation';
+    } else if (text.includes('api') || text.includes('endpoint')) {
+        return 'api';
+    } else if (text.includes('file') || text.includes('code') || text.includes('.js') || text.includes('.py') || text.includes('.html')) {
+        return 'code';
+    }
+    
+    return 'general';
+}
+
+function getSourceIcon(sourceType) {
+    const icons = {
+        lesson: '🎓',
+        pdf: '📄',
+        video: '🎬',
+        documentation: '📋',
+        api: '🔗',
+        code: '💻',
+        general: '📖'
+    };
+    
+    return icons[sourceType] || icons.general;
+}
+
 // Removed removeMessage function - no longer needed since we handle loading differently
 
 async function createNewSession() {
     currentSessionId = null;
     chatMessages.innerHTML = '';
     addMessage('Welcome to the Course Materials Assistant! I can help you with questions about courses, lessons and specific content. What would you like to know?', 'assistant', null, true);
+}
+
+function startNewChat() {
+    // Clear current session and start fresh
+    createNewSession();
+    
+    // Clear any text in the input field
+    chatInput.value = '';
+    
+    // Focus the chat input for immediate use
+    chatInput.focus();
+    
+    // Add a subtle visual feedback
+    newChatButton.style.transform = 'scale(0.95)';
+    setTimeout(() => {
+        newChatButton.style.transform = '';
+    }, 150);
 }
 
 // Load course statistics
