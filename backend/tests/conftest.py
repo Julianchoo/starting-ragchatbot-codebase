@@ -1,16 +1,18 @@
-import pytest
 import os
-import tempfile
 import shutil
-from unittest.mock import Mock, MagicMock
-from dataclasses import dataclass
-from typing import List, Dict, Any, Optional
 
 # Add the backend directory to the path for imports
 import sys
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
+import tempfile
+from dataclasses import dataclass
+from typing import Any, Dict, List, Optional
+from unittest.mock import MagicMock, Mock
 
-from models import Course, Lesson, CourseChunk
+import pytest
+
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+
+from models import Course, CourseChunk, Lesson
 from vector_store import SearchResults
 
 
@@ -42,20 +44,20 @@ def temp_chroma_path():
 def mock_course():
     return Course(
         title="Test Course",
-        instructor="Test Instructor", 
+        instructor="Test Instructor",
         course_link="https://example.com/course",
         lessons=[
             Lesson(
                 lesson_number=1,
                 title="Test Lesson 1",
-                lesson_link="https://example.com/lesson1"
+                lesson_link="https://example.com/lesson1",
             ),
             Lesson(
                 lesson_number=2,
-                title="Test Lesson 2", 
-                lesson_link="https://example.com/lesson2"
-            )
-        ]
+                title="Test Lesson 2",
+                lesson_link="https://example.com/lesson2",
+            ),
+        ],
     )
 
 
@@ -66,20 +68,20 @@ def mock_course_chunks():
             course_title="Test Course",
             lesson_number=1,
             chunk_index=0,
-            content="This is the first chunk of content about testing."
-        ),
-        CourseChunk(
-            course_title="Test Course", 
-            lesson_number=1,
-            chunk_index=1,
-            content="This is the second chunk with more testing information."
+            content="This is the first chunk of content about testing.",
         ),
         CourseChunk(
             course_title="Test Course",
-            lesson_number=2, 
+            lesson_number=1,
+            chunk_index=1,
+            content="This is the second chunk with more testing information.",
+        ),
+        CourseChunk(
+            course_title="Test Course",
+            lesson_number=2,
             chunk_index=2,
-            content="This is content from lesson 2 about advanced topics."
-        )
+            content="This is content from lesson 2 about advanced topics.",
+        ),
     ]
 
 
@@ -88,32 +90,25 @@ def mock_search_results():
     return SearchResults(
         documents=[
             "This is the first chunk of content about testing.",
-            "This is the second chunk with more testing information."
+            "This is the second chunk with more testing information.",
         ],
         metadata=[
             {"course_title": "Test Course", "lesson_number": 1, "chunk_index": 0},
-            {"course_title": "Test Course", "lesson_number": 1, "chunk_index": 1}
+            {"course_title": "Test Course", "lesson_number": 1, "chunk_index": 1},
         ],
-        distances=[0.1, 0.2]
+        distances=[0.1, 0.2],
     )
 
 
 @pytest.fixture
 def empty_search_results():
-    return SearchResults(
-        documents=[],
-        metadata=[],
-        distances=[]
-    )
+    return SearchResults(documents=[], metadata=[], distances=[])
 
 
 @pytest.fixture
 def error_search_results():
     return SearchResults(
-        documents=[],
-        metadata=[], 
-        distances=[],
-        error="Database connection failed"
+        documents=[], metadata=[], distances=[], error="Database connection failed"
     )
 
 
